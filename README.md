@@ -29,7 +29,7 @@ The system was trained on a curated dataset of **6 million URLs** sourced from i
 ## Live Demo
 
 ### ✅ Benign URL Detection
-*Source: YouTube — `https://www.youtube.com`*
+*Source: YouTube — `Website URL`*
 
 ![Benign URL Detection](Images/Benign_image.png)
 
