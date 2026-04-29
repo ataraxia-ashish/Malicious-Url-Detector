@@ -138,6 +138,7 @@ malicious-url-detector/
 │   └── app.py            # Flask application entry point
 ├── feature_cols_v6.json  # Feature column manifest
 ├── requirements.txt
+├── License
 └── README.md
 ```
 
