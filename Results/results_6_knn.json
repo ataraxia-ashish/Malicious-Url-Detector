@@ -1,0 +1,22 @@
+{
+  "model": "KNN",
+  "acc": 0.853,
+  "auc": 0.9187,
+  "f1": 0.8265,
+  "precision": 0.8558,
+  "recall": 0.7992,
+  "confusion": [
+    [
+      612523,
+      71931
+    ],
+    [
+      107266,
+      426933
+    ]
+  ],
+  "train_time_min": 35.26,
+  "trained_on": "100K_sub",
+  "algorithm": "brute",
+  "k": 5
+}

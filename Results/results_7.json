@@ -1,0 +1,101 @@
+{
+  "individual": {
+    "LightGBM": {
+      "AUC": 0.989,
+      "ACC": 0.9464,
+      "F1": 0.9382
+    },
+    "XGBoost": {
+      "AUC": 0.9835,
+      "ACC": 0.9344,
+      "F1": 0.924
+    },
+    "CatBoost": {
+      "AUC": 0.9786,
+      "ACC": 0.9253,
+      "F1": 0.9132
+    },
+    "RandomForest": {
+      "AUC": 0.9805,
+      "ACC": 0.927,
+      "F1": 0.9163
+    },
+    "HistGradientBoosting": {
+      "AUC": 0.9793,
+      "ACC": 0.9258,
+      "F1": 0.9139
+    },
+    "SVC": {
+      "AUC": 0.9013,
+      "ACC": 0.8177,
+      "F1": 0.7851
+    },
+    "GaussianNB": {
+      "AUC": 0.8098,
+      "ACC": 0.6954,
+      "F1": 0.5213
+    },
+    "DecisionTree": {
+      "AUC": 0.9427,
+      "ACC": 0.8836,
+      "F1": 0.866
+    },
+    "MLP": {
+      "AUC": 0.9648,
+      "ACC": 0.9006,
+      "F1": 0.8832
+    },
+    "KNN": {
+      "AUC": 0.9187,
+      "ACC": 0.853,
+      "F1": 0.8265
+    },
+    "LR": {
+      "AUC": 0.9055,
+      "ACC": 0.8216,
+      "F1": 0.7881
+    }
+  },
+  "ensembles": {
+    "Top3_avg": {
+      "models": [
+        "LightGBM",
+        "XGBoost",
+        "CatBoost"
+      ],
+      "AUC": 0.9853,
+      "ACC": 0.9378,
+      "F1": 0.9279
+    },
+    "Top5_avg": {
+      "models": [
+        "LightGBM",
+        "XGBoost",
+        "CatBoost",
+        "RandomForest",
+        "HistGradientBoosting"
+      ],
+      "AUC": 0.9843,
+      "ACC": 0.9357,
+      "F1": 0.9256
+    },
+    "All_avg": {
+      "models": [
+        "LightGBM",
+        "XGBoost",
+        "CatBoost",
+        "RandomForest",
+        "HistGradientBoosting",
+        "SVC",
+        "GaussianNB",
+        "DecisionTree",
+        "MLP",
+        "KNN",
+        "LR"
+      ],
+      "AUC": 0.9784,
+      "ACC": 0.9254,
+      "F1": 0.9119
+    }
+  }
+}

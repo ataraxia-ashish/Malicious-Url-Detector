@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Malicious URL Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #09090f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --text: #e8e8f0;
+    --muted: #5a5a72;
+    --accent: #00f5a0;
+    --danger: #ff3c5f;
+    --warn: #ffb347;
+    --glow-safe: 0 0 40px rgba(0,245,160,0.15);
+    --glow-danger: 0 0 40px rgba(255,60,95,0.2);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Radial glow top */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 500px;
+    background: radial-gradient(ellipse, rgba(0,245,160,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,245,160,0.08);
+    border: 1px solid rgba(0,245,160,0.2);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.05;
+    color: #fff;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Card */
+  .card {
+    width: 100%;
+    max-width: 680px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    animation: fadeUp 0.7s ease both 0.1s;
+    transition: box-shadow 0.4s ease;
+  }
+
+  .card.safe  { box-shadow: var(--glow-safe); border-color: rgba(0,245,160,0.25); }
+  .card.danger { box-shadow: var(--glow-danger); border-color: rgba(255,60,95,0.3); }
+
+  /* Input row */
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .url-input {
+    flex: 1;
+    background: #0d0d15;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .url-input::placeholder { color: var(--muted); }
+  .url-input:focus { border-color: rgba(0,245,160,0.4); }
+
+  .btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s, transform 0.15s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Result */
+  .result {
+    margin-top: 28px;
+    display: none;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .result.visible { display: block; }
+
+  .verdict-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .verdict {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .verdict-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .verdict-icon.safe   { background: rgba(0,245,160,0.1); }
+  .verdict-icon.danger { background: rgba(255,60,95,0.1); }
+
+  .verdict-label {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .verdict-label.safe   { color: var(--accent); }
+  .verdict-label.danger { color: var(--danger); }
+
+  .verdict-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Confidence bar */
+  .conf-section {
+    margin-top: 24px;
+  }
+
+  .conf-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .conf-value {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .bar-track {
+    height: 8px;
+    background: #1a1a26;
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .bar-fill.safe   { background: linear-gradient(90deg, #00c87a, var(--accent)); }
+  .bar-fill.danger { background: linear-gradient(90deg, #cc0033, var(--danger)); }
+
+  /* Stats row */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .stat-box {
+    background: #0d0d15;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+
+  .stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* URL display */
+  .url-display {
+    margin-top: 20px;
+    background: #0d0d15;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  .url-display strong {
+    color: var(--text);
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(255,60,95,0.08);
+    border: 1px solid rgba(255,60,95,0.2);
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--danger);
+  }
+
+  .error-msg.visible { display: block; }
+
+  /* Loading */
+  .loading {
+    display: none;
+    margin-top: 24px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .loading.visible { display: block; }
+
+  .dots span {
+    animation: blink 1.2s infinite;
+    opacity: 0;
+  }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  /* Footer */
+  .footer {
+    margin-top: 36px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    animation: fadeUp 0.8s ease both 0.2s;
+    line-height: 1.8;
+  }
+
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 0; }
+    50%       { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header class="header">
+    <div class="badge">LightGBM · 6M URLs · AUC 0.989</div>
+    <h1>Malicious URL<br/><span>Detector</span></h1>
+    <p class="subtitle">// ML-powered threat intelligence · real-time inference</p>
+  </header>
+
+  <div class="card" id="card">
+    <div class="input-row">
+      <input
+        class="url-input"
+        id="urlInput"
+        type="text"
+        placeholder="https://example.com/path?query=value"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="btn" id="scanBtn" onclick="scan()">Scan</button>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="loading" id="loading">
+      Analyzing<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
+
+    <div class="result" id="result">
+      <div class="divider"></div>
+
+      <div class="verdict-row">
+        <div class="verdict">
+          <div class="verdict-icon" id="vIcon"></div>
+          <div>
+            <div class="verdict-label" id="vLabel"></div>
+            <div class="verdict-sub" id="vSub"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="conf-section">
+        <div class="conf-header">
+          <span>MALICIOUS PROBABILITY</span>
+          <span class="conf-value" id="confVal"></span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="barFill"></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-label">LightGBM Score</div>
+          <div class="stat-val" id="lgbmScore"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Model</div>
+          <div class="stat-val" style="font-size:13px; padding-top:3px;">LightGBM</div>
+        </div>
+      </div>
+
+      <div class="url-display" id="urlDisplay">
+        <strong>Analyzed URL</strong>
+        <span id="urlText"></span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Trained on 6M URLs · 86 features · StratifiedShuffleSplit 80/20<br/>
+    Built by <a href="#">Ashish</a> · BCA (NEP) Sem 4 · Sardar Patel University
+  </footer>
+
+</div>
+
+<script>
+  const input = document.getElementById('urlInput');
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') scan(); });
+
+  async function scan() {
+    const url = input.value.trim();
+    if (!url) return;
+
+    const btn     = document.getElementById('scanBtn');
+    const loading = document.getElementById('loading');
+    const result  = document.getElementById('result');
+    const errMsg  = document.getElementById('errorMsg');
+    const card    = document.getElementById('card');
+
+    btn.disabled = true;
+    loading.classList.add('visible');
+    result.classList.remove('visible');
+    errMsg.classList.remove('visible');
+    card.className = 'card';
+
+    try {
+      const res  = await fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      const isMal  = data.label === 'MALICIOUS';
+      const score  = data.score;   // lgbm_score 0–1
+      const pct    = (score * 100).toFixed(2) + '%';
+
+      // Verdict
+      document.getElementById('vIcon').className  = `verdict-icon ${isMal ? 'danger' : 'safe'}`;
+      document.getElementById('vIcon').textContent = isMal ? '⚠️' : '✅';
+      document.getElementById('vLabel').className  = `verdict-label ${isMal ? 'danger' : 'safe'}`;
+      document.getElementById('vLabel').textContent = data.label;
+      document.getElementById('vSub').textContent   = isMal
+        ? 'Threat detected — do not visit'
+        : 'No threats detected';
+
+      // Bar
+      const bar = document.getElementById('barFill');
+      bar.className = `bar-fill ${isMal ? 'danger' : 'safe'}`;
+      setTimeout(() => { bar.style.width = (score * 100) + '%'; }, 50);
+
+      // Stats
+      document.getElementById('confVal').textContent   = pct;
+      document.getElementById('lgbmScore').textContent = score.toFixed(4);
+
+      // URL
+      document.getElementById('urlText').textContent = data.url;
+
+      // Card glow
+      card.className = `card ${isMal ? 'danger' : 'safe'}`;
+
+      result.classList.add('visible');
+    } catch(e) {
+      errMsg.textContent = '⚠ ' + (e.message || 'Prediction failed');
+      errMsg.classList.add('visible');
+    } finally {
+      btn.disabled = false;
+      loading.classList.remove('visible');
+    }
+  }
+</script>
+</body>
+</html>
