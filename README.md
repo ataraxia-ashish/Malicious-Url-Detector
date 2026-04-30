@@ -90,9 +90,7 @@ LightGBM was selected as the production model after exhaustive benchmarking acro
 
 ## Model Comparison
 
-![Model Comparison — AUC / ACC / F1](Charts/01_model_comparison.png)
-
-Eleven models were trained and evaluated on identical train/test splits. The chart above shows AUC, Accuracy, and F1 scores across all models.
+Eleven models were trained and evaluated on identical train/test splits.
 
 | Model | AUC | Notes |
 |---|---|---|
