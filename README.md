@@ -113,17 +113,59 @@ Eleven models were trained and evaluated on identical train/test splits. The cha
 
 ## Charts & Analysis
 
-| Chart | Description |
-|---|---|
-| `01_model_comparison.png` | AUC / ACC / F1 across all 11 models |
-| `02_lgbm_confusion_matrix.png` | LightGBM confusion matrix |
-| `03_lgbm_feature_importance.png` | Top 20 features by gain |
-| `04_lgbm_confidence_dist.png` | Prediction confidence distribution |
-| `05_lgbm_threshold_analysis.png` | Precision-Recall vs threshold |
-| `06_lgbm_roc_curve.png` | ROC curve |
-| `07_lgbm_pr_curve.png` | Precision-Recall curve |
-| `08_f1_all_models.png` | F1 scores across all models |
+### 📊 Model Comparison — AUC / ACC / F1
+![Model Comparison](Charts/01_model_comparison.png)
 
+LightGBM leads across all three metrics (AUC: 0.989, ACC: 0.946, F1: 0.938). XGBoost and CatBoost follow closely. GaussianNB collapses on F1 (0.521), exposing its inability to handle the feature interactions present in URL data.
+
+---
+
+### 🔢 LightGBM Confusion Matrix
+![Confusion Matrix](Charts/02_lgbm_confusion_matrix.png)
+
+Out of 1.2M test samples: 645,741 true negatives and 495,434 true positives. False positives and false negatives are symmetric at ~38,700 each — indicating a well-balanced model with no systemic bias toward either class.
+
+---
+
+### 🌟 Feature Importance (Gain)
+![Feature Importance](Charts/03_lgbm_feature_importance.png)
+
+`uppercase` character count ranks #1 by gain (7.6M), followed by `cte_domain`, `hyphens`, and `dots`. Structural and character-distribution features dominate — consistent with known phishing URL construction patterns. Entropy-based features (`se_domain`, `se_path`, `se_url`) appear in the lower half, contributing meaningful but secondary signal.
+
+---
+
+### 📈 Confidence Score Distribution
+![Confidence Distribution](Charts/04_lgbm_confidence_dist.png)
+
+Both classes polarize sharply toward 0 and 1 respectively, with minimal overlap around the 0.5 threshold. This indicates the model is highly confident in the vast majority of predictions — not just accurate, but decisive.
+
+---
+
+### ⚖️ Threshold Analysis
+![Threshold Analysis](Charts/05_lgbm_threshold_analysis.png)
+
+Optimal F1 is achieved at threshold = 0.51 — nearly identical to the default 0.5. Precision and Recall cross at ~0.93, confirming the model is naturally balanced without requiring threshold tuning. Aggressive threshold shifts toward 1.0 rapidly degrade recall.
+
+---
+
+### 📉 ROC Curve
+![ROC Curve](Charts/06_lgbm_roc_curve.png)
+
+AUC of 0.9848. The curve hugs the top-left corner aggressively — at a false positive rate of just ~0.02, the model already achieves ~0.90 true positive rate. Strong separation between classes throughout the operating range.
+
+---
+
+### 🎯 Precision-Recall Curve
+![PR Curve](Charts/07_lgbm_pr_curve.png)
+
+PR-AUC of 0.9828 against a baseline of 0.438. Precision holds at 1.0 until recall approaches ~0.85, then degrades gracefully. This curve is particularly meaningful given the class imbalance context — the model doesn't sacrifice precision to chase recall.
+
+---
+
+### 🏁 F1 Score — All 11 Models
+![F1 All Models](Charts/08_f1_all_models.png)
+
+LightGBM (0.9382) outperforms all competitors. The top-5 tree-based models cluster between 0.91–0.94. GaussianNB (0.5213) is the clear outlier. Linear models (SVC, LR) cap out around 0.78–0.79, confirming the non-linear nature of malicious URL patterns.
 ---
 
 ## Project Structure
