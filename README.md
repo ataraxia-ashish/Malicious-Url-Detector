@@ -46,6 +46,21 @@ The model flags a PhishTank-sourced phishing URL as malicious. Key signals inclu
 
 ---
 
+## 🗓️ Development Timeline
+
+**April 17, 2026 – April 26, 2026**
+
+The project was built over ten days of iterative development, debugging, and experimentation.
+
+### ⚠️ Challenges Faced
+
+The most persistent issue throughout the entire development period was **model overfitting**. On multiple occasions, the model hit 100% training accuracy — which looked great on paper but collapsed immediately during real-world testing. Basic legitimate URLs like `google.com` were being misclassified, revealing the model had memorized the training data rather than learning meaningful patterns.
+
+This wasn't a one-time failure. It resurfaced across multiple iterations, forcing repeated rethinks of feature engineering, dataset balance, and evaluation strategy. Every failure narrowed the gap between a model that performs on metrics and one that actually works.
+
+---
+
+
 ## Model Architecture
 
 ### 🏆 LightGBM — Production Model (AUC: 0.9890)
